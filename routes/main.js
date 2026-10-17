@@ -1,6 +1,7 @@
 var router = require('express').Router()
 var vulnDict = require('../config/vulns')
 var authHandler = require('../core/authHandler')
+var orderHandler = require('../core/orderHandler')
 
 module.exports = function (passport) {
 	router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -63,6 +64,10 @@ module.exports = function (passport) {
 	router.post('/forgotpw', authHandler.forgotPw)
 
 	router.post('/resetpw', authHandler.resetPwSubmit)
+
+	router.post('/password/token', orderHandler.resetToken)
+
+	router.post('/password/reset', orderHandler.resetPassword)
 
 	return router
 }
