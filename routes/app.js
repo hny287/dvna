@@ -2,6 +2,7 @@ var router = require('express').Router()
 var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
 var orderHandler = require('../core/orderHandler')
+var creditHandler = require('../core/creditHandler')
 
 module.exports = function () {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -79,6 +80,8 @@ module.exports = function () {
     router.post('/admin/promote', authHandler.isAuthenticated, orderHandler.promote)
 
     router.post('/profile', authHandler.isAuthenticated, orderHandler.updateProfile)
+
+    router.post('/credit/transfer', authHandler.isAuthenticated, creditHandler.transferCredit)
 
     return router
 }
