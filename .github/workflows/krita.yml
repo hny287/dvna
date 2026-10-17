@@ -1,0 +1,56 @@
+name: Krita Security Scan
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Krita Scan
+        id: scan
+        run: |
+          RESPONSE=$(curl -sS --fail-with-body -X POST "https://dev.astra.nerdlogics.cloud/api/v1/scans" \
+            -H "Authorization: Bearer ${{ secrets.KRITA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repoUrl": "${{ github.server_url }}/${{ github.repository }}",
+              "branch": "${{ github.event.number && format('pr/{0}', github.event.number) || github.ref_name }}",
+              "commitSha": "${{ github.sha }}",
+              "source": "github-actions",
+              "prNumber": ${{ github.event.number || 'null' }},
+              "projectId": "cmvbsxkj300008bl22qy64hci",
+              "presetId": "cmvbsxpsx00028bl28fi0k62f",
+              "engine": "v4",
+              "ciMetadata": {
+                "baseRef": "${{ github.base_ref }}",
+                "runId": "${{ github.run_id }}",
+                "runUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "actor": "${{ github.actor }}"
+              }
+            }') || { echo "scan request refused: $RESPONSE"; exit 1; }
+          SCAN_ID=$(echo "$RESPONSE" | jq -r '.scanId')
+          echo "scan $SCAN_ID started"
+          echo "SCAN_ID=$SCAN_ID" >> "$GITHUB_ENV"
+
+      - name: Wait for scan and enforce policy
+        run: |
+          VERDICT=timeout
+          for i in $(seq 1 360); do
+            BODY=$(curl -sf -H "Authorization: Bearer ${{ secrets.KRITA_API_KEY }}" \
+              "https://dev.astra.nerdlogics.cloud/api/v1/scans/$SCAN_ID/verdict?failOn=CRITICAL,HIGH") || { sleep 10; continue; }
+            STATUS=$(echo "$BODY" | jq -r '.status')
+            echo "scan $SCAN_ID: $STATUS"
+            case "$STATUS" in
+              COMPLETED) VERDICT=$(echo "$BODY" | jq -r '.verdict'); break ;;
+              FAILED|CANCELLED) echo "scan did not complete: $STATUS"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          if [ "$VERDICT" = "timeout" ]; then
+            echo "timed out after 60 minutes waiting for scan $SCAN_ID"
+            exit 1
+          fi
+          echo "verdict: $VERDICT"
+          if [ "$VERDICT" = "block" ]; then exit 1; fi
