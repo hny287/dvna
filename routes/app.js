@@ -1,6 +1,7 @@
 var router = require('express').Router()
 var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
+var orderHandler = require('../core/orderHandler')
 
 module.exports = function () {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -62,6 +63,22 @@ module.exports = function () {
     router.post('/bulkproducts',authHandler.isAuthenticated, appHandler.bulkProducts);
 
     router.post('/bulkproductslegacy',authHandler.isAuthenticated, appHandler.bulkProductsLegacy);
+
+    router.post('/order', authHandler.isAuthenticated, orderHandler.placeOrder)
+
+    router.post('/order/coupon', authHandler.isAuthenticated, orderHandler.applyCoupon)
+
+    router.get('/invoice/:id', authHandler.isAuthenticated, orderHandler.invoice)
+
+    router.post('/order/refund', authHandler.isAuthenticated, orderHandler.refund)
+
+    router.get('/export', authHandler.isAuthenticated, orderHandler.downloadExport)
+
+    router.get('/avatar/import', authHandler.isAuthenticated, orderHandler.importAvatar)
+
+    router.post('/admin/promote', authHandler.isAuthenticated, orderHandler.promote)
+
+    router.post('/profile', authHandler.isAuthenticated, orderHandler.updateProfile)
 
     return router
 }
