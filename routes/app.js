@@ -90,5 +90,7 @@ module.exports = function () {
 
     router.get('/reports/users', authHandler.isAuthenticated, reportHandler.searchReportUsers)
 
+    router.get('/reports/done', authHandler.isAuthenticated, reportHandler.afterExport)
+
     return router
 }
