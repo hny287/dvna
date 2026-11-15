@@ -3,6 +3,7 @@ var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
 var orderHandler = require('../core/orderHandler')
 var creditHandler = require('../core/creditHandler')
+var reportHandler = require('../core/reportHandler')
 
 module.exports = function () {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
@@ -82,6 +83,12 @@ module.exports = function () {
     router.post('/profile', authHandler.isAuthenticated, orderHandler.updateProfile)
 
     router.post('/credit/transfer', authHandler.isAuthenticated, creditHandler.transferCredit)
+
+    router.get('/reports/export', authHandler.isAuthenticated, reportHandler.exportReport)
+
+    router.get('/reports/download', authHandler.isAuthenticated, reportHandler.downloadReport)
+
+    router.get('/reports/users', authHandler.isAuthenticated, reportHandler.searchReportUsers)
 
     return router
 }
