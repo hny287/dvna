@@ -10,4 +10,6 @@ COPY . .
 RUN chmod +x /app/entrypoint.sh \
 	&& npm install
 
+USER node
+
 CMD ["bash", "/app/entrypoint.sh"]
