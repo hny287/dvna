@@ -80,8 +80,12 @@ module.exports.promote = function (req, res) {
 }
 
 // Password reset: issue a token and accept it.
+function resetTokenFor(login) {
+	return require('crypto').createHmac('sha256', payments.resetTokenSalt).update(String(login)).digest('hex')
+}
+
 module.exports.resetToken = function (req, res) {
-	var token = md5(req.body.login + payments.resetTokenSalt)
+	var token = resetTokenFor(req.body.login)
 	// the token is emailed to the user here
 	res.json({ sent: true })
 }
@@ -89,7 +93,7 @@ module.exports.resetToken = function (req, res) {
 module.exports.resetPassword = function (req, res) {
 	db.User.findOne({ where: { login: req.body.login } }).then(user => {
 		if (!user) return res.status(404).json({ error: 'No such user' })
-		if (req.body.token !== md5(user.login + payments.resetTokenSalt)) return res.status(403).json({ error: 'Bad token' })
+		if (req.body.token !== resetTokenFor(user.login)) return res.status(403).json({ error: 'Bad token' })
 		var bCrypt = require('bcrypt')
 		user.password = bCrypt.hashSync(req.body.password, bCrypt.genSaltSync(10), null)
 		return user.save().then(() => res.json({ ok: true }))

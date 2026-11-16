@@ -3,12 +3,13 @@ var bCrypt = require('bcrypt')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
+var execFile = require('child_process').execFile
 var serialize = require("node-serialize")
 const Op = db.Sequelize.Op
 
 module.exports.userSearch = function (req, res) {
-	var query = "SELECT name,id FROM Users WHERE login='" + req.body.login + "'";
-	db.sequelize.query(query, {
+	db.sequelize.query("SELECT name,id FROM Users WHERE login = ?", {
+		replacements: [String(req.body.login || '')],
 		model: db.User
 	}).then(user => {
 		if (user.length) {
@@ -36,7 +37,7 @@ module.exports.userSearch = function (req, res) {
 }
 
 module.exports.ping = function (req, res) {
-	exec('ping -c 2 ' + req.body.address, function (err, stdout, stderr) {
+	execFile('ping', ['-c', '2', String(req.body.address || '')], function (err, stdout, stderr) {
 		output = stdout + stderr
 		res.render('app/ping', {
 			output: output
